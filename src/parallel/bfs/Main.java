@@ -5,7 +5,12 @@ import parallel.bfs.workers.BfsWorker;
 import parallel.bfs.workers.DirectedGraphGenerator;
 import parallel.bfs.workers.UndirectedGraphGenerator;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -13,7 +18,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class Main {
     private static Properties properties;
 
+    private static Queue<String> messages;
+
     public static void main(String[] args) {
+        messages = new LinkedList<>();
         properties = initProperties(args);
 
         //Create graph:
@@ -25,6 +33,21 @@ public class Main {
         }
 
         int[] parent = bfsLevelBarrier(graph);
+
+        if (properties.filename() != null) {
+            File f = new File(properties.filename());
+            try {
+                f.createNewFile();
+                try (FileOutputStream oFile = new FileOutputStream(f, false)) {
+                    while (!messages.isEmpty()) {
+                       oFile.write(messages.poll().getBytes());
+                       oFile.write(System.lineSeparator().getBytes());
+                    }
+                }
+            } catch (IOException e) {
+                System.out.println("Error occurred while creating file " + properties.filename());
+            }
+        }
     }
 
     public static int[] bfsLevelBarrier(Boolean[][] graph) {
@@ -162,6 +185,8 @@ public class Main {
         if (!properties.quiet()) {
             System.out.println(msg);
         }
+
+        messages.add(msg);
     }
 
     private static void printGraph(Boolean[][] graph) {
@@ -177,6 +202,7 @@ public class Main {
         Options options = new Options();
         options.addOption(new Option("n", true, "Number of vertices"));
         options.addOption(new Option("d", true, "Density (in %)"));
+        options.addOption(new Option("o", true, "Write results to file"));
         options.addOption(new Option("q", false, "Enable quiet mode"));
         options.addOption(new Option("t", true, "Threads count (serial execution if argument is not passed)"));
         options.addOption(new Option("directed", false, "Build a directed graph"));
@@ -208,10 +234,15 @@ public class Main {
                 }
             }
 
+            String filename = null;
+            if (cmd.hasOption("o")) {
+                filename = cmd.getOptionValue("o");
+            }
+
             if (cmd.hasOption("n")) {
                 int verticesCount = Integer.parseInt(cmd.getOptionValue("n"));
 
-                return new Properties(verticesCount, density, quiet, directed, threadsCount);
+                return new Properties(verticesCount, density, quiet, directed, threadsCount, filename);
             } else {
                 throw new RuntimeException("You must specify a number of vertices");
             }

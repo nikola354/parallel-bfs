@@ -6,13 +6,19 @@ public class Properties {
     private final boolean quiet;
     private final boolean directed;
     private final int threadsCount;
+    private final String filename;
 
-    public Properties(int verticesCount, double density, boolean quiet, boolean directed, int threadsCount) {
+    public Properties(int verticesCount, double density, boolean quiet, boolean directed, int threadsCount, String filename) {
         this.verticesCount = verticesCount;
         this.density = density;
         this.quiet = quiet;
         this.directed = directed;
         this.threadsCount = threadsCount;
+        this.filename = filename;
+    }
+
+    public String filename() {
+        return filename;
     }
 
     public int verticesCount() {
