@@ -1,11 +1,14 @@
 package parallel.bfs;
 
 import org.apache.commons.cli.*;
+import parallel.bfs.workers.BfsWorker;
 import parallel.bfs.workers.DirectedGraphGenerator;
 import parallel.bfs.workers.UndirectedGraphGenerator;
 
+import java.util.Arrays;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Main {
     private static Properties properties;
@@ -21,6 +24,68 @@ public class Main {
             graph = createUndirectedGraph();
         }
 
+        int[] parent = bfsLevelBarrier(graph);
+    }
+
+    public static int[] bfsLevelBarrier(Boolean[][] graph) {
+        printMsg("Starting parallel BFS with level barrier using " + properties.threadsCount() + " threads");
+        long startBFS = System.currentTimeMillis();
+
+        int verticesCount = properties.verticesCount();
+        int threadsCount = properties.threadsCount();
+        int[] parent = new int[verticesCount];
+        Arrays.fill(parent, -1);
+
+        AtomicBoolean[] visited = new AtomicBoolean[verticesCount];
+        for (int i = 0; i < verticesCount; i++) {
+            visited[i] = new AtomicBoolean(false);
+        }
+
+        long[] threadsTimes = new long[threadsCount];
+
+        for (int index = 0; index < verticesCount; index++) {
+            if (!visited[index].get()) {
+                bfsLevelBarrierFromVertex(graph, parent, visited, index, threadsTimes);
+            }
+        }
+
+        long accumulatedTime = System.currentTimeMillis() - startBFS;
+
+        for (int workerID = 0; workerID < threadsCount; workerID++) {
+            printMsg("Parallel BFS worker-" + workerID + " took " + threadsTimes[workerID] + " ms");
+        }
+
+        printMsg("Parallel BFS with level barrier using " + threadsCount + " threads took " +
+                accumulatedTime + " ms");
+        return parent;
+    }
+
+    private static void bfsLevelBarrierFromVertex(Boolean[][] graph, int[] parent, AtomicBoolean[] visited, int start, long[] threadsTimes) {
+        BlockingQueue<Integer> currentVertices = new LinkedBlockingQueue<>();
+        currentVertices.add(start);
+        visited[start].set(true);
+
+        BlockingQueue<Integer> futureVertices = new LinkedBlockingQueue<>();
+
+        Thread[] threads = new Thread[properties.threadsCount()];
+
+        while (!currentVertices.isEmpty()) {
+            for (int workerId = 0; workerId < properties.threadsCount(); workerId++) {
+                threads[workerId] = new Thread(new BfsWorker(graph, parent, visited, currentVertices, futureVertices, properties, threadsTimes, workerId));
+                threads[workerId].start();
+            }
+
+            for (Thread thread : threads) {
+                try {
+                    thread.join();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e.getMessage());
+                }
+            }
+
+            currentVertices = new LinkedBlockingQueue<>(futureVertices);
+            futureVertices.clear();
+        }
     }
 
     private static Boolean[][] createDirectedGraph() {

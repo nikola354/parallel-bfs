@@ -21,7 +21,7 @@ public class UndirectedGraphGenerator implements Runnable {
 
     @Override
     public void run() {
-        Main.printMsg("Starting directed graph generator:  worker-" + id);
+        Main.printMsg("Starting undirected graph generator:  worker-" + id);
 
         long start = System.currentTimeMillis();
 
@@ -37,6 +37,6 @@ public class UndirectedGraphGenerator implements Runnable {
         }
 
         long timeElapsed = System.currentTimeMillis() - start;
-        Main.printMsg("Directed graph generator: worker-" + id + " took " + timeElapsed + "ms");
+        Main.printMsg("Undirected graph generator: worker-" + id + " took " + timeElapsed + "ms");
     }
 }
