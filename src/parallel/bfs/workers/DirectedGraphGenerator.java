@@ -18,7 +18,7 @@ public class DirectedGraphGenerator implements Runnable {
 
     @Override
     public void run() {
-        Main.printMsg("Starting directed graph generating  worker-" + row);
+        Main.printMsg("Starting directed graph generator:  worker-" + row);
 
         long start = System.currentTimeMillis();
 
@@ -30,6 +30,6 @@ public class DirectedGraphGenerator implements Runnable {
         }
 
         long timeElapsed = System.currentTimeMillis() - start;
-        Main.printMsg("Generating directed graph worker-" + row + " took " + timeElapsed + "ms");
+        Main.printMsg("Directed graph generator: worker-" + row + " took " + timeElapsed + "ms");
     }
 }

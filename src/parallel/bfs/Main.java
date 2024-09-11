@@ -2,6 +2,10 @@ package parallel.bfs;
 
 import org.apache.commons.cli.*;
 import parallel.bfs.workers.DirectedGraphGenerator;
+import parallel.bfs.workers.UndirectedGraphGenerator;
+
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class Main {
     private static Properties properties;
@@ -26,9 +30,9 @@ public class Main {
         printMsg("Starting generation of directed graph...");
 
         long startTime = System.currentTimeMillis();
-        for (int row = 0; row < properties.threadsCount(); row++) {
-            threads[row] = new Thread(new DirectedGraphGenerator(graph, properties, row));
-            threads[row].start();
+        for (int i = 0; i < properties.threadsCount(); i++) {
+            threads[i] = new Thread(new DirectedGraphGenerator(graph, properties, i));
+            threads[i].start();
         }
 
         for (Thread thread : threads) {
@@ -46,15 +50,33 @@ public class Main {
 
     private static Boolean[][] createUndirectedGraph() {
         Boolean[][] graph = createEmptyGraph();
-//        ThreadLocalRandom random = ThreadLocalRandom.current();
-//
-//        for (int i = 0; i < verticesCount; i++) {
-//            for (int j = i + 1; j < verticesCount; j++) {
-//                graph[i][j] = random.nextDouble() < density;
-//                graph[j][i] = graph[i][j];
-//            }
-//        }
+        Thread[] threads = new Thread[properties.threadsCount()];
 
+
+        final int n = properties.verticesCount();
+        BlockingQueue<Integer> tasks = new LinkedBlockingQueue<>(n);
+        for (int row = 0; row < n; row++) {
+            tasks.add(row);
+        }
+
+        printMsg("Starting generation of undirected graph...");
+
+        long startTime = System.currentTimeMillis();
+        for (int i = 0; i < properties.threadsCount(); i++) {
+            threads[i] = new Thread(new UndirectedGraphGenerator(graph, properties, tasks, i));
+            threads[i].start();
+        }
+
+        for (Thread thread : threads) {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e.getMessage());
+            }
+        }
+
+        long endTime = System.currentTimeMillis();
+        printMsg("Generation of undirected graph took " + (endTime - startTime) + "ms");
         return graph;
     }
 
