@@ -1,24 +1,26 @@
 package parallel.bfs;
 
 public class Properties {
-    private final int verticesCount;
+    private int verticesCount;
     private final double density;
     private final boolean quiet;
     private final boolean directed;
     private final int threadsCount;
-    private final String filename;
+    private final String outputFile;
+    private final String inputFile;
 
-    public Properties(int verticesCount, double density, boolean quiet, boolean directed, int threadsCount, String filename) {
+    public Properties(int verticesCount, double density, boolean quiet, boolean directed, int threadsCount, String outputFile, String inputFile) {
         this.verticesCount = verticesCount;
         this.density = density;
         this.quiet = quiet;
         this.directed = directed;
         this.threadsCount = threadsCount;
-        this.filename = filename;
+        this.outputFile = outputFile;
+        this.inputFile = inputFile;
     }
 
-    public String filename() {
-        return filename;
+    public String outputFile() {
+        return outputFile;
     }
 
     public int verticesCount() {
@@ -39,5 +41,13 @@ public class Properties {
 
     public int threadsCount() {
         return threadsCount;
+    }
+
+    public String inputFile() {
+        return inputFile;
+    }
+
+    public void setVerticesCount(int verticesCount) {
+        this.verticesCount = verticesCount;
     }
 }

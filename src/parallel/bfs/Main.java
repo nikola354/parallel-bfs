@@ -5,9 +5,7 @@ import parallel.bfs.workers.BfsWorker;
 import parallel.bfs.workers.DirectedGraphGenerator;
 import parallel.bfs.workers.UndirectedGraphGenerator;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -26,7 +24,14 @@ public class Main {
 
         //Create graph:
         Boolean[][] graph;
-        if (properties.directed()) {
+
+        if (properties.inputFile() != null) {
+            graph = readGraphFromFile(properties.inputFile());
+            if (graph == null) {
+                return;
+            }
+            properties.setVerticesCount(graph.length);
+        } else if (properties.directed()) {
             graph = createDirectedGraph();
         } else {
             graph = createUndirectedGraph();
@@ -34,18 +39,18 @@ public class Main {
 
         int[] parent = bfsLevelBarrier(graph);
 
-        if (properties.filename() != null) {
-            File f = new File(properties.filename());
+        if (properties.outputFile() != null) {
+            File f = new File(properties.outputFile());
             try {
                 f.createNewFile();
                 try (FileOutputStream oFile = new FileOutputStream(f, false)) {
                     while (!messages.isEmpty()) {
-                       oFile.write(messages.poll().getBytes());
-                       oFile.write(System.lineSeparator().getBytes());
+                        oFile.write(messages.poll().getBytes());
+                        oFile.write(System.lineSeparator().getBytes());
                     }
                 }
             } catch (IOException e) {
-                System.out.println("Error occurred while creating file " + properties.filename());
+                System.out.println("Error occurred while creating file " + properties.outputFile());
             }
         }
     }
@@ -109,6 +114,37 @@ public class Main {
             currentVertices = new LinkedBlockingQueue<>(futureVertices);
             futureVertices.clear();
         }
+    }
+
+    public static Boolean[][] readGraphFromFile(String fileName) {
+        Boolean[][] graph = null;
+
+        File f = new File(fileName);
+        if(!f.exists() || f.isDirectory()) {
+            System.out.println("File " + fileName + " not found");
+            return null;
+        }
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
+            // Read the first line which contains the number of vertices
+            int n = Integer.parseInt(reader.readLine().trim());
+
+            graph = new Boolean[n][n];
+
+            // Read each line and fill the adjacency matrix
+            for (int i = 0; i < n; i++) {
+                String[] line = reader.readLine().trim().split("\\s+");
+                for (int j = 0; j < n; j++) {
+                    graph[i][j] = line[j].equals("1");
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading the file: " + e.getMessage());
+        } catch (NumberFormatException e) {
+            System.err.println("Invalid number format: " + e.getMessage());
+        }
+
+        return graph;
     }
 
     private static Boolean[][] createDirectedGraph() {
@@ -203,6 +239,7 @@ public class Main {
         options.addOption(new Option("n", true, "Number of vertices"));
         options.addOption(new Option("d", true, "Density (in %)"));
         options.addOption(new Option("o", true, "Write results to file"));
+        options.addOption(new Option("i", true, "Read graph from file"));
         options.addOption(new Option("q", false, "Enable quiet mode"));
         options.addOption(new Option("t", true, "Threads count (serial execution if argument is not passed)"));
         options.addOption(new Option("directed", false, "Build a directed graph"));
@@ -234,19 +271,22 @@ public class Main {
                 }
             }
 
-            String filename = null;
+            String outputFile = null;
             if (cmd.hasOption("o")) {
-                filename = cmd.getOptionValue("o");
+                outputFile = cmd.getOptionValue("o");
             }
 
+            int verticesCount = -1;
+            String inputFile = null;
             if (cmd.hasOption("n")) {
-                int verticesCount = Integer.parseInt(cmd.getOptionValue("n"));
-
-                return new Properties(verticesCount, density, quiet, directed, threadsCount, filename);
+                verticesCount = Integer.parseInt(cmd.getOptionValue("n"));
+            } else if (cmd.hasOption("i")) {
+                inputFile = cmd.getOptionValue("i");
             } else {
                 throw new RuntimeException("You must specify a number of vertices");
             }
 
+            return new Properties(verticesCount, density, quiet, directed, threadsCount, outputFile, inputFile);
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }
