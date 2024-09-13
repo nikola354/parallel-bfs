@@ -1,8 +1,3 @@
-package parallel.bfs.workers;
-
-import parallel.bfs.Main;
-import parallel.bfs.Properties;
-
 import java.util.concurrent.ThreadLocalRandom;
 
 public class DirectedGraphGenerator implements Runnable {

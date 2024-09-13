@@ -1,5 +1,3 @@
-package parallel.bfs;
-
 public class Properties {
     private int verticesCount;
     private final double density;

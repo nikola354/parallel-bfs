@@ -1,9 +1,4 @@
-package parallel.bfs;
-
 import org.apache.commons.cli.*;
-import parallel.bfs.workers.BfsWorker;
-import parallel.bfs.workers.DirectedGraphGenerator;
-import parallel.bfs.workers.UndirectedGraphGenerator;
 
 import java.io.*;
 import java.util.Arrays;

@@ -1,7 +1,3 @@
-package parallel.bfs.workers;
-
-import parallel.bfs.Properties;
-
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 

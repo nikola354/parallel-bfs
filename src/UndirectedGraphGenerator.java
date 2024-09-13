@@ -1,8 +1,3 @@
-package parallel.bfs.workers;
-
-import parallel.bfs.Main;
-import parallel.bfs.Properties;
-
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ThreadLocalRandom;
 
